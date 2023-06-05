@@ -30,6 +30,9 @@ CPIN.value(1)
 PICOLED = Pin(25,Pin.OUT)
 PICOLED.value(1)
 
+SWITCHLED = Pin(18,Pin.OUT)
+SWITCHLED.value(0)
+
 '''シリアル通信設定'''
 uart = UART(0,115200,tx=Pin(12),rx=Pin(13))
 uart.init(115200, bits=8, parity=None, stop=1) 
@@ -48,6 +51,7 @@ while True:
             BrightDat += result 
 
     DatSplit = BrightDat.split()
+    print(DatSplit)
     try:
         count = 0 
         for row in DatSplit:
@@ -60,7 +64,7 @@ while True:
     except:
         txData='NOP\r\n'
         uart.write(txData)
-
+    print(strBrightDat)
     if strCommand == 'CTRLBRIGHT':
         if len(strBrightDat) != 4:
             if strBrightDat == 'ON':
@@ -121,8 +125,21 @@ while True:
         CPIN.value(1)
         uart.write('LEDON\r\n')
     elif strCommand == 'f':
-        CPIN.value(0)
+        CPIN.value(0) 
         uart.write('LEDOFF\r\n')
+    elif strCommand == 'SWITCHLED':
+        if strBrightDat == '0': 
+            CPIN.value(0)
+            txData='LEDOFF\r\n'
+            time.sleep(0.5)
+            SWITCHLED.value(0) 
+            uart.write('VISIBLE-LIGHT_LED\r\n')
+        if strBrightDat == '1': 
+            CPIN.value(0)
+            txData='LEDOFF\r\n'
+            time.sleep(0.5)
+            SWITCHLED.value(1) 
+            uart.write('NIR_LED\r\n')
     elif strCommand != 'CTRLBRIGHT':
         txData='NOP\r\n'
         DataProcessing()
