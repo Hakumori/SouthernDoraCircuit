@@ -10,6 +10,7 @@ strBrightDat=str()
 DatSplit = list()
 BrightSet =int()
 SaveBrightSetting = int()
+LEDState = str()
 
 '''エラー処理'''
 def DataProcessing():
@@ -40,15 +41,18 @@ txData='SystemStartUp\r\n'
 uart.write(txData)
 
 e=0
+LEDState = '0'
 while True:
     result=""
     BrightDat=""
-
+    rxData=0
+    
     while result is not '\n':
-        rxData = uart.readline()
+        rxData = uart.read(1)
         if rxData is not None:
             result = rxData.decode('utf-8')
-            BrightDat += result 
+            BrightDat += result
+            print(str(result))
 
     DatSplit = BrightDat.split()
     print(DatSplit)
@@ -134,14 +138,26 @@ while True:
             time.sleep(0.5)
             SWITCHLED.value(0) 
             uart.write('VISIBLE-LIGHT_LED\r\n')
-        if strBrightDat == '1': 
+            LEDState = '0'
+            #print(LEDState)
+        elif strBrightDat == '1': 
             CPIN.value(0)
             txData='LEDOFF\r\n'
             time.sleep(0.5)
             SWITCHLED.value(1) 
             uart.write('NIR_LED\r\n')
-    elif strCommand != 'CTRLBRIGHT':
+            LEDState = '1'
+            #print(LEDState)
+        elif strBrightDat == 'CHK': 
+            #LEDState = LEDState + '\r\n'
+            #print(LEDState)
+            uart.write(LEDState + '\r\n')
+        else:
+            print('Passage')
+            txData='NOP\r\n'
+            uart.write(txData)
+    elif strCommand != 'CTRLBRIGHT' and strCommand != 'SWITCHLED':
         txData='NOP\r\n'
         DataProcessing()
 
-time.sleep(0.08) #0.08秒待機
+#time.sleep(0.01) #0.08秒待機
