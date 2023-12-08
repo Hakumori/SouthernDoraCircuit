@@ -3,161 +3,131 @@ import sys
 import time
 
 rxData=bytes()
-rxData2=bytes()
+txData0= str()
+txData1= str()
 result=str()
 strCommand =str()
-strBrightDat=str()
-DatSplit = list()
+strDigiR = str()
+strDigiL = str()
+
 BrightSet =int()
-SaveBrightSetting = int()
-LEDState = str()
+SelectedMeasure = int()
 
 '''エラー処理'''
 def DataProcessing():
-    uart.write(txData)
-    rxData=""
-    strCommand =""
-    strBrightDat=""
-    
-'''I/O設定'''
-DIN = [0,1,2,3,4,5,6,7]
-for d in DIN:
-    DIN[d] = Pin(d, Pin.OUT)
-    DIN[d].value(0)
-    
-CPIN = Pin(10,Pin.OUT)
-CPIN.value(1)
-
-PICOLED = Pin(25,Pin.OUT)
-PICOLED.value(1)
-
-SWITCHLED = Pin(18,Pin.OUT)
-SWITCHLED.value(0)
-
-'''シリアル通信設定'''
-uart = UART(0,115200,tx=Pin(12),rx=Pin(13))
-uart.init(115200, bits=8, parity=None, stop=1) 
-txData='SystemStartUp\r\n'
-uart.write(txData)
-
-e=0
-LEDState = '0'
-while True:
     result=""
     BrightDat=""
     rxData=0
+
+    #uart1.write(txData1)
     
-    while result is not '\n':
-        rxData = uart.read(1)
+    while result is not '\r':
+        rxData = uart1.read(1)
         if rxData is not None:
             result = rxData.decode('utf-8')
             BrightDat += result
             print(str(result))
 
-    DatSplit = BrightDat.split()
-    print(DatSplit)
-    try:
-        count = 0 
-        for row in DatSplit:
-            row_str = []
-            if count == 0:
-                strCommand = row
-            if count == 1:
-                strBrightDat = row
-            count += 1
-    except:
-        txData='NOP\r\n'
-        uart.write(txData)
-    print(strBrightDat)
-    if strCommand == 'CTRLBRIGHT':
-        if len(strBrightDat) != 4:
-            if strBrightDat == 'ON':
-                CPIN.value(1)
-                txData='LEDON\r\n'
-                DataProcessing()
-            elif strBrightDat == 'OFF':
-                CPIN.value(0)
-                txData='LEDOFF\r\n'
-                DataProcessing()
-            elif strBrightDat == 'CHK':
-                strBrightValue = str(SaveBrightSetting)
-                txData= '0' + strBrightValue + '\r\n'
-                uart.write(txData)
-            else :
-                txData='NOP\r\n'
-                DataProcessing()
-        elif len(strBrightDat) == 4:
-            try:
-                intBrightDat = int(strBrightDat)
-                BinBrightDat =[]
-                
-                if intBrightDat > 255:
-                    intBrightDat = 255
-                    strBrightDat = str(intBrightDat)#"0255"
-                
-                while intBrightDat > 0:
-                    if intBrightDat % 2 == 0:
-                        intBrightDat = int(intBrightDat / 2)
-                        BinBrightDat.append(0)
-                    elif intBrightDat % 2 == 1:
-                        BinBrightDat.append(intBrightDat % 2)
-                        intBrightDat = int(intBrightDat / 2)
-                
-                BinBrightDat.reverse()
-                if len(BinBrightDat) != 8:
-                    ElementsNum = 8 - len(BinBrightDat)
-                    for i in range(0,ElementsNum):
-                        BinBrightDat.insert(0,0)
+    uart0.write(BrightDat + '\r')
+    print(BrightDat + '\r\n')
 
-                CPIN.value(1)
-                time.sleep(0.01)
-                for j in range(0,8,1):
-                    if BinBrightDat[7-j] ==1: 
-                        DIN[j].value(1)
-                    if BinBrightDat[7-j] ==0: 
-                        DIN[j].value(0)
-                
-                BrightRate =round(float(strBrightDat) / 255 * 100,2)
-                SaveBrightSetting = int(strBrightDat)
-                print(BrightRate)
-                strBrightRate = str(BrightRate)
-                txData = strBrightRate + '%\r\n'
-                DataProcessing()
-            except:
-                DataProcessing()
-    elif strCommand == 'n':
-        CPIN.value(1)
-        uart.write('LEDON\r\n')
-    elif strCommand == 'f':
-        CPIN.value(0) 
-        uart.write('LEDOFF\r\n')
-    elif strCommand == 'SWITCHLED':
-        if strBrightDat == '0': 
-            CPIN.value(0)
-            txData='LEDOFF\r\n'
-            time.sleep(0.5)
-            SWITCHLED.value(0) 
-            uart.write('VISIBLE-LIGHT_LED\r\n')
-            LEDState = '0'
-            #print(LEDState)
-        elif strBrightDat == '1': 
-            CPIN.value(0)
-            txData='LEDOFF\r\n'
-            time.sleep(0.5)
-            SWITCHLED.value(1) 
-            uart.write('NIR_LED\r\n')
-            LEDState = '1'
-            #print(LEDState)
-        elif strBrightDat == 'CHK': 
-            #LEDState = LEDState + '\r\n'
-            #print(LEDState)
-            uart.write(LEDState + '\r\n')
-        else:
-            print('Passage')
-            txData='NOP\r\n'
-            uart.write(txData)
-    elif strCommand != 'CTRLBRIGHT' and strCommand != 'SWITCHLED':
-        txData='NOP\r\n'
-        DataProcessing()
+    
+'''シリアル通信設定'''
+uart0 = UART(0,115200,tx=Pin(12),rx=Pin(13))
+uart0.init(115200, bits=8, parity=None, stop=1) 
+txData0='Ver.2.0 SystemStartUp\r\n'
+#print(txData0)
+uart0.write(txData0)
+print(txData0)
 
-#time.sleep(0.01) #0.08秒待機
+uart1 = UART(1,9600,tx=Pin(4),rx=Pin(5))
+uart1.init(9600, bits=8, parity=None, stop=1) 
+
+PICOLED = Pin(25,Pin.OUT)
+PICOLED.value(1)
+
+while True:
+    result=""
+    BrightDat=""
+    rxData=0
+
+    #while result is not '\n':
+    while result is not '\r':
+        #rxData = uart0.read(1)
+        rxData = uart1.read(1)
+        if rxData is not None:
+            result = rxData.decode('utf-8')
+            BrightDat += result
+            #print(str(result))
+
+    length = len(BrightDat)
+
+    print(BrightDat)
+    #print('Passing!')
+
+    if BrightDat == 'S1\r':#\n':
+        SelectedMeasure = 1
+        print('SENDING FROM NOW ON!')
+        #DataProcessing()
+    elif BrightDat == 'S2\r':#\n':
+        SelectedMeasure = 2
+        print('SENDING FROM NOW ON!')
+        #DataProcessing()
+    elif BrightDat[0:2] == 'L1':
+         SelectedMeasure = 3
+         print(BrightDat[0:2])
+    elif BrightDat[0:2] == 'L2':
+         SelectedMeasure = 4
+         print(BrightDat[0:2])
+         
+    print("DigiMicroNo."+str(SelectedMeasure))
+        
+    if length > 5 and SelectedMeasure == 1:
+        '''
+        #取得データを加工して高さ[um]へ変換
+        flotedataR = float(BrightDat[-5:]) * 1000
+        DigiR = str(flotedataR)
+        print(DigiR)
+        txData0=DigiR
+        uart0.write("DigiR: " + txData0 + '\r\n')
+        '''
+        #取得データをそのまま使う
+        txData0=BrightDat
+        uart0.write('R' + txData0 + '\r\n')
+    elif length > 5 and SelectedMeasure == 2:
+        '''#取得データを加工して高さ[um]へ変換
+        flotedataL = float(BrightDat[-5:]) * 1000
+        DigiL = str(flotedataL)
+        print(DigiL)
+        txData0=DigiL
+        uart0.write("DigiL: " + txData0 + '\r\n')
+        '''
+        #取得データをそのまま使う
+        txData0=BrightDat
+        uart0.write('L' + txData0 + '\r\n')
+    elif length > 5 and SelectedMeasure == 3:
+        '''#取得データを加工して高さ[um]へ変換
+        flotedataL = float(BrightDat[-5:]) * 1000
+        DigiL = str(flotedataL)
+        print(DigiL)
+        txData0=DigiL
+        uart0.write("DigiL: " + txData0 + '\r\n')
+        '''
+        #取得データをそのまま使う
+        txData0=BrightDat
+        uart0.write('L' + txData0 + '\r\n')
+    elif length > 5 and SelectedMeasure == 4:
+        '''#取得データを加工して高さ[um]へ変換
+        flotedataL = float(BrightDat[-5:]) * 1000
+        DigiL = str(flotedataL)
+        print(DigiL)
+        txData0=DigiL
+        uart0.write("DigiL: " + txData0 + '\r\n')
+        '''
+        #取得データをそのまま使う
+        txData0=BrightDat
+        uart0.write('L' + txData0 + '\r\n')
+    
+
+
+    #time.sleep(0.01) #0.08秒待機'''
